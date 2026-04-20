@@ -408,7 +408,8 @@ function ToolPage() {
         formData.append(field.name, formState[field.name] ?? '');
       }
 
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}${config.endpoint}`, {
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
+      const response = await fetch(`${apiBaseUrl}${config.endpoint}`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`

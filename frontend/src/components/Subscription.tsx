@@ -12,11 +12,12 @@ function Subscription() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
   const handleSubscribe = async (priceId: string) => {
     setLoading(true);
     setMessage('');
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/subscription/create-checkout`, {
+      const response = await fetch(`${apiBaseUrl}/api/subscription/create-checkout`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -50,7 +51,14 @@ function Subscription() {
             <p>{plan.description}</p>
             <button
               type="button"
-              onClick={() => handleSubscribe(import.meta.env[plan.priceIdEnv] as string)}
+              onClick={() => {
+                const priceId = import.meta.env[plan.priceIdEnv] as string | undefined;
+                if (!priceId) {
+                  setMessage(`Missing ${plan.priceIdEnv} in frontend/.env`);
+                  return;
+                }
+                handleSubscribe(priceId);
+              }}
               disabled={!isLoaded || !user || loading}
             >
               {loading ? 'Redirecting…' : 'Subscribe'}

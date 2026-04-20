@@ -19,6 +19,25 @@ const upload = multer({ storage: multer.memoryStorage() });
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
+async function initDb() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      clerk_user_id TEXT UNIQUE NOT NULL,
+      email TEXT,
+      first_name TEXT,
+      last_name TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    );
+  `);
+}
+
+initDb().catch((error) => {
+  console.error('Database initialization failed:', error);
+  process.exit(1);
+});
+
 app.get('/health', async (req, res) => {
   res.json({ status: 'ok' });
 });
@@ -32,7 +51,11 @@ app.get('/api/tools', (req, res) => {
     { category: 'Edit PDF', items: ['Rotate PDF', 'Add page numbers', 'Add watermark', 'Crop PDF', 'Edit PDF'] },
     { category: 'PDF Security', items: ['Unlock PDF', 'Protect PDF', 'Sign PDF', 'Redact PDF', 'Compare PDF'] },
     { category: 'PDF Intelligence', items: ['AI Summarizer', 'Translate PDF'] },
-    { category: 'Image Tools', items: ['Bulk Resize', 'Resize PNG', 'Resize JPG', 'Resize WebP', 'Crop PNG', 'Crop JPG', 'Crop WebP', 'HEIC to JPG', 'WebP to PNG', 'WebP to JPG', 'PNG to JPG', 'PNG to SVG', 'Compress JPEG', 'PNG Compressor', 'GIF Compressor', 'Meme Generator', 'Color Picker', 'Rotate Image', 'Flip Image', 'Image Enlarger'] }
+    { category: 'Image Resize', items: ['Bulk Resize', 'Resize PNG', 'Resize JPG', 'Resize WebP'] },
+    { category: 'Image Crop', items: ['Crop PNG', 'Crop JPG', 'Crop WebP'] },
+    { category: 'Image Convert', items: ['HEIC to JPG', 'WebP to PNG', 'WebP to JPG', 'PNG to JPG', 'PNG to SVG'] },
+    { category: 'Image Optimize', items: ['Compress JPEG', 'PNG Compressor', 'GIF Compressor', 'Image Enlarger'] },
+    { category: 'Image Effects', items: ['Rotate Image', 'Flip Image', 'Meme Generator', 'Color Picker'] }
   ];
   res.json({ tools });
 });
@@ -40,7 +63,20 @@ app.get('/api/tools', (req, res) => {
 app.get('/api/user', ClerkExpressRequireAuth({}), async (req, res) => {
   const { userId } = req.auth;
   const user = await clerkClient.users.getUser(userId);
-  res.json({ user: { id: user.id, email: user.emailAddresses?.[0]?.emailAddress || '', firstName: user.firstName, lastName: user.lastName } });
+
+  const email = user.emailAddresses?.[0]?.emailAddress || null;
+  const firstName = user.firstName || null;
+  const lastName = user.lastName || null;
+
+  await pool.query(
+    `INSERT INTO users (clerk_user_id, email, first_name, last_name, updated_at)
+     VALUES ($1, $2, $3, $4, NOW())
+     ON CONFLICT (clerk_user_id)
+     DO UPDATE SET email = EXCLUDED.email, first_name = EXCLUDED.first_name, last_name = EXCLUDED.last_name, updated_at = NOW();`,
+    [user.id, email, firstName, lastName]
+  );
+
+  res.json({ user: { id: user.id, email: email || '', firstName, lastName } });
 });
 
 app.post('/api/subscription/create-checkout', ClerkExpressRequireAuth({}), async (req, res) => {

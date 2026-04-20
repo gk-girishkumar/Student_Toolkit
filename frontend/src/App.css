@@ -7,33 +7,8 @@
 }
 
 .app-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 2rem;
-  background: #0f172a;
-  color: #f8fafc;
-}
-
-.brand {
-  font-size: 1.35rem;
-  font-weight: 700;
-}
-
-.nav-links a {
-  color: #e2e8f0;
-  margin-right: 1rem;
-  text-decoration: none;
-}
-
-.nav-links a:hover {
-  color: #fff;
-}
-
-.auth-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  padding: 1.5rem 2rem 0;
+  background: transparent;
 }
 
 .app-main {
@@ -45,12 +20,31 @@
   margin-bottom: 1.5rem;
 }
 
-.dashboard-header h1 {
-  margin: 0;
-  font-size: 2rem;
+.dashboard-header.hero-header {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: calc(100vh - 90px);
+  padding: 4rem 2rem;
+  background: linear-gradient(180deg, #eff6ff 0%, #f8fafc 100%);
+  border-radius: 2rem;
 }
 
-.dashboard-header p {
-  margin: 0.5rem 0 0;
+.dashboard-header.hero-header h1 {
+  margin: 0;
+  font-size: clamp(3rem, 6vw, 5rem);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.dashboard-header.hero-header p {
+  margin: 1.25rem 0 0;
   color: #475569;
+  font-size: 1.25rem;
+  max-width: 720px;
+}
+
+.dashboard-content-full {
+  width: 100%;
 }

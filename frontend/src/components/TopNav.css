@@ -1,0 +1,132 @@
+.top-nav-container {
+  position: relative;
+}
+
+.top-nav-menu {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: #ffffff;
+  padding: 1rem 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+}
+
+.top-nav-brand {
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.brand-icon {
+  color: #e11d48;
+}
+
+.top-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.top-nav-link,
+.auth-button {
+  border: none;
+  background: transparent;
+  color: #0f172a;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.top-nav-link:hover,
+.auth-button:hover {
+  color: #2563eb;
+}
+
+.top-nav-dropdown {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.dropdown-arrow {
+  font-size: 0.8rem;
+}
+
+.top-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.auth-button {
+  padding: 0.75rem 1rem;
+  border-radius: 999px;
+  min-width: 86px;
+  text-align: center;
+}
+
+.auth-login {
+  border: 1px solid #e2e8f0;
+}
+
+.auth-signup {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.mega-dropdown {
+  position: absolute;
+  left: 2rem;
+  right: 2rem;
+  top: calc(100% + 0.5rem);
+  background: #ffffff;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.12);
+  z-index: 10;
+}
+
+.mega-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.mega-column h4 {
+  margin: 0 0 1rem;
+  font-size: 0.95rem;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.mega-item {
+  display: block;
+  margin-bottom: 0.75rem;
+  color: #0f172a;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.mega-item:hover {
+  color: #2563eb;
+}
+
+@media (max-width: 900px) {
+  .top-nav-menu {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .top-nav-actions {
+    justify-content: flex-start;
+  }
+
+  .mega-dropdown {
+    left: 1rem;
+    right: 1rem;
+  }
+}

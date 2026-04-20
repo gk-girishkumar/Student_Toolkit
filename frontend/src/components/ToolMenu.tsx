@@ -15,29 +15,40 @@ function ToolMenu() {
   const [tools, setTools] = useState<ToolCategory[]>([]);
 
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_BASE_URL}/api/tools`)
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
+
+    fetch(`${apiBaseUrl}/api/tools`)
       .then((res) => res.json())
       .then((data) => setTools(data.tools || []))
       .catch(() => setTools([]));
   }, []);
 
+  const pdfSections = tools.filter((group) => group.category !== 'Image Tools');
+
+  const renderGroupItems = (group: ToolCategory) => (
+    <div key={group.category} className="tool-subcategory">
+      <h3>{group.category}</h3>
+      <div className="tool-item-list">
+        {group.items.map((item) => (
+          <Link key={item} to={`/tool/${createSlug(item)}`} className="tool-item-link">
+            <span>{item}</span>
+            <span className="tool-item-action">Open</span>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+
   return (
     <section className="tool-menu">
-      {tools.map((group) => (
-        <div key={group.category} className="tool-category">
-          <h2>{group.category}</h2>
-          <div className="tool-list">
-            {group.items.map((item) => (
-              <div key={item} className="tool-card">
-                <span>{item}</span>
-                <Link to={`/tool/${createSlug(item)}`} className="tool-button">
-                  Open
-                </Link>
-              </div>
-            ))}
-          </div>
+      <div className="tool-section">
+        <button type="button" className="tool-section-header" aria-expanded="true">
+          <span>PDF Tools</span>
+        </button>
+        <div className="tool-section-content">
+          {pdfSections.length > 0 ? pdfSections.map(renderGroupItems) : <p>No PDF tools available.</p>}
         </div>
-      ))}
+      </div>
     </section>
   );
 }
