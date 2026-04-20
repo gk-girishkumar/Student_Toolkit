@@ -1,0 +1,87 @@
+.tool-page {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.tool-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.tool-page-header h1 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+.back-link {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.tool-form {
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+}
+
+.tool-field {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.tool-field span {
+  font-weight: 600;
+}
+
+.tool-field input[type="file"] {
+  padding: 0.5rem 0;
+}
+
+.tool-field input[type="number"] {
+  width: 100%;
+  padding: 0.8rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.75rem;
+}
+
+.tool-form button {
+  padding: 0.95rem 1.25rem;
+  border: none;
+  background: #2563eb;
+  color: white;
+  border-radius: 0.9rem;
+  font-weight: 700;
+}
+
+.tool-status {
+  padding: 1rem;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.9rem;
+}
+
+.tool-download {
+  display: inline-block;
+  margin-top: 0.75rem;
+  padding: 0.85rem 1.1rem;
+  color: white;
+  background: #16a34a;
+  text-decoration: none;
+  border-radius: 0.85rem;
+}
+
+.tool-placeholder {
+  padding: 1.25rem;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.9rem;
+}

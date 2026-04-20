@@ -1,0 +1,8 @@
+{
+  "name": "student-toolkit",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ]
+}
