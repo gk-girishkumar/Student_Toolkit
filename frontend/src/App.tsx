@@ -1,12 +1,11 @@
 import { Route, Routes, Navigate } from 'react-router-dom';
-import { SignedIn, SignedOut, UserButton, useUser, useAuth } from '@clerk/clerk-react';
+import { UserButton, useUser, useAuth } from '@clerk/clerk-react';
 import { useEffect } from 'react';
 import TopNav from './components/TopNav';
 import ToolMenu from './components/ToolMenu';
 import ToolPage from './components/ToolPage';
 import Subscription from './components/Subscription';
 import LoginPage from './pages/LoginPage';
-import SignupPage from './pages/SignupPage';
 import './App.css';
 
 function App() {
@@ -22,7 +21,7 @@ function App() {
           <Route path="/tool/:toolId" element={<ToolPage />} />
           <Route path="/subscription" element={<Subscription />} />
           <Route path="/sign-in/*" element={<LoginPage />} />
-          <Route path="/sign-up/*" element={<SignupPage />} />
+          <Route path="/sign-up/*" element={<Navigate to="/sign-in" replace />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </main>

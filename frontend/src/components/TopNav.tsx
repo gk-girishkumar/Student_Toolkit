@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { SignedIn, UserButton } from '@clerk/clerk-react';
 import './TopNav.css';
 
 interface ToolCategory {
@@ -86,12 +87,9 @@ function TopNav() {
         </div>
 
         <div className="top-nav-actions">
-          <Link to="/sign-in" className="auth-button auth-login">
-            Login
-          </Link>
-          <Link to="/sign-up" className="auth-button auth-signup">
-            Sign up
-          </Link>
+          <SignedIn>
+            <UserButton />
+          </SignedIn>
         </div>
       </nav>
 

@@ -2,6 +2,7 @@
   "name": "student-toolkit-backend",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "dev": "nodemon index.js",

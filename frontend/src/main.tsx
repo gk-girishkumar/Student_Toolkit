@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter, useNavigate } from 'react-router-dom';
 import { ClerkProvider } from '@clerk/clerk-react';
 import App from './App';
 import './index.css';
@@ -22,14 +22,26 @@ if (!clerkPubKey) {
   throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY');
 }
 
+function ClerkProviderWithRoutes() {
+  const navigate = useNavigate();
+
+  return (
+    <ClerkProvider
+      publishableKey={clerkPubKey}
+      routerPush={(to) => navigate(to)}
+      routerReplace={(to) => navigate(to, { replace: true })}
+    >
+      <App />
+    </ClerkProvider>
+  );
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ErrorBoundary>
-      <ClerkProvider publishableKey={clerkPubKey}>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
-      </ClerkProvider>
+      <BrowserRouter>
+        <ClerkProviderWithRoutes />
+      </BrowserRouter>
     </ErrorBoundary>
   </React.StrictMode>
 );
