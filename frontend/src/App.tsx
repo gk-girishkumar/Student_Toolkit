@@ -2,7 +2,6 @@ import { Route, Routes, Navigate } from 'react-router-dom';
 import { UserButton, useUser, useAuth } from '@clerk/clerk-react';
 import { useEffect } from 'react';
 import TopNav from './components/TopNav';
-import ToolMenu from './components/ToolMenu';
 import ToolPage from './components/ToolPage';
 import Subscription from './components/Subscription';
 import LoginPage from './pages/LoginPage';
@@ -65,7 +64,7 @@ function ProtectedDashboard() {
   return (
     <div className="dashboard-page hero-page">
       <div className="dashboard-header hero-header">
-        <h1>Welcome back, {user.firstName || 'Student'}!</h1>
+        <h1>Welcome back, {(user.firstName || 'Student').toUpperCase()}!</h1>
         <p>Use the tool list below to select any PDF or image conversion tool.</p>
       </div>
     </div>

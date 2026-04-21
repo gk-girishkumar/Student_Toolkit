@@ -23,7 +23,8 @@ function ToolMenu() {
       .catch(() => setTools([]));
   }, []);
 
-  const pdfSections = tools.filter((group) => group.category !== 'Image Tools');
+  const pdfSections = tools.filter((group) => !group.category.toLowerCase().startsWith('image'));
+  const imageSections = tools.filter((group) => group.category.toLowerCase().startsWith('image'));
 
   const renderGroupItems = (group: ToolCategory) => (
     <div key={group.category} className="tool-subcategory">
@@ -42,11 +43,20 @@ function ToolMenu() {
   return (
     <section className="tool-menu">
       <div className="tool-section">
-        <button type="button" className="tool-section-header" aria-expanded="true">
-          <span>PDF Tools</span>
-        </button>
+        <div className="tool-section-header">
+          <h2>PDF Tools</h2>
+        </div>
         <div className="tool-section-content">
           {pdfSections.length > 0 ? pdfSections.map(renderGroupItems) : <p>No PDF tools available.</p>}
+        </div>
+      </div>
+
+      <div className="tool-section">
+        <div className="tool-section-header">
+          <h2>Image Tools</h2>
+        </div>
+        <div className="tool-section-content">
+          {imageSections.length > 0 ? imageSections.map(renderGroupItems) : <p>No Image tools available.</p>}
         </div>
       </div>
     </section>

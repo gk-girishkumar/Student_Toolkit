@@ -588,6 +588,10 @@ app.post('/api/image/compress', ClerkExpressRequireAuth({}), upload.single('file
   }
 });
 
-app.listen(port, () => {
-  console.log(`Backend running on http://localhost:${port}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(port, () => {
+    console.log(`Backend running on http://localhost:${port}`);
+  });
+}
+
+export default app;
