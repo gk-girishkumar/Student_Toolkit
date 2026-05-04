@@ -45,7 +45,7 @@ initDb().then(() => {
   console.log('Database initialized successfully');
 }).catch((error) => {
   console.error('Database initialization failed:', error);
-  process.exit(1);
+  // Do not exit process, so Vercel does not crash on startup if env vars are missing
 });
 
 app.use(cors({
@@ -688,8 +688,10 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: err.message || 'Internal Server Error' });
 });
 
-app.listen(port, () => {
-  console.log(`Backend running on http://localhost:${port}`);
-});
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+  app.listen(port, () => {
+    console.log(`Backend running on http://localhost:${port}`);
+  });
+}
 
 export default app;
