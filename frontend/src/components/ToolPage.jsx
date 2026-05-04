@@ -565,7 +565,7 @@ function ToolPage() {
 
               <form
                 className="tool-form workspace-form"
-                action={`http://localhost:4000${config.endpoint}`}
+                onSubmit={handleSubmit}
                 method="POST"
                 encType="multipart/form-data"
               >
