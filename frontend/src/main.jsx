@@ -1,15 +1,15 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { BrowserRouter, useNavigate } from 'react-router-dom';
-import { ClerkProvider } from '@clerk/clerk-react';
-import App from './App';
-import './index.css';
-import ErrorBoundary from './ErrorBoundary';
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter, useNavigate } from "react-router-dom";
+import { ClerkProvider } from "@clerk/clerk-react";
+import App from "./App";
+import "./index.css";
+import ErrorBoundary from "./ErrorBoundary";
 
 const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 if (!clerkPubKey) {
-  const rootElement = document.getElementById('root');
+  const rootElement = document.getElementById("root");
   if (rootElement) {
     rootElement.innerHTML = `
       <div style="font-family:Inter, system-ui, sans-serif; padding:2rem; background:#f8fafc; color:#111;">
@@ -19,7 +19,7 @@ if (!clerkPubKey) {
       </div>
     `;
   }
-  throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY');
+  throw new Error("Missing VITE_CLERK_PUBLISHABLE_KEY");
 }
 
 function ClerkProviderWithRoutes() {
@@ -36,12 +36,12 @@ function ClerkProviderWithRoutes() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <ErrorBoundary>
       <BrowserRouter>
         <ClerkProviderWithRoutes />
       </BrowserRouter>
     </ErrorBoundary>
-  </React.StrictMode>
+  </React.StrictMode>,
 );

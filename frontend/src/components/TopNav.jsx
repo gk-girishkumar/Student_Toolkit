@@ -1,36 +1,35 @@
-import { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { SignedIn, UserButton } from '@clerk/clerk-react';
-import { 
-  Combine, 
-  Scissors, 
-  Zap, 
-  ArrowRightLeft, 
-  LayoutGrid, 
+import { useEffect, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { SignedIn, UserButton } from "@clerk/clerk-react";
+import {
+  Combine,
+  Scissors,
+  Zap,
+  ArrowRightLeft,
+  LayoutGrid,
   Image as ImageIcon,
   ChevronDown,
-  Sparkles
-} from 'lucide-react';
-import './TopNav.css';
+  Sparkles,
+} from "lucide-react";
+import "./TopNav.css";
 
-interface ToolCategory {
-  category: string;
-  items: string[];
-}
-
-function createSlug(name: string) {
-  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+function createSlug(name) {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
 }
 
 function TopNav() {
-  const [tools, setTools] = useState<ToolCategory[]>([]);
+  const [tools, setTools] = useState([]);
   const [showMega, setShowMega] = useState(false);
   const [showImageMega, setShowImageMega] = useState(false);
   const [showConvert, setShowConvert] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
+    const apiBaseUrl =
+      import.meta.env.VITE_API_BASE_URL || "http://localhost:4000";
     fetch(`${apiBaseUrl}/api/tools`)
       .then((res) => res.json())
       .then((data) => setTools(data.tools || []))
@@ -44,17 +43,28 @@ function TopNav() {
     setShowConvert(false);
   }, [location]);
 
-  const pdfTools = tools.filter((group) => !group.category.toLowerCase().startsWith('image'));
-  const imageTools = tools.filter((group) => group.category.toLowerCase().startsWith('image'));
+  const pdfTools = tools.filter(
+    (group) => !group.category.toLowerCase().startsWith("image"),
+  );
+  const imageTools = tools.filter((group) =>
+    group.category.toLowerCase().startsWith("image"),
+  );
 
   const quickLinks = [
-    { label: 'Merge PDF', slug: 'merge-pdf', icon: <Combine size={18} /> },
-    { label: 'Split PDF', slug: 'split-pdf', icon: <Scissors size={18} /> },
-    { label: 'Compress PDF', slug: 'compress-pdf', icon: <Zap size={18} /> },
+    { label: "Merge PDF", slug: "merge-pdf", icon: <Combine size={18} /> },
+    { label: "Split PDF", slug: "split-pdf", icon: <Scissors size={18} /> },
+    { label: "Compress PDF", slug: "compress-pdf", icon: <Zap size={18} /> },
   ];
 
   return (
-    <div className="top-nav-container" onMouseLeave={() => { setShowMega(false); setShowConvert(false); setShowImageMega(false); }}>
+    <div
+      className="top-nav-container"
+      onMouseLeave={() => {
+        setShowMega(false);
+        setShowConvert(false);
+        setShowImageMega(false);
+      }}
+    >
       <nav className="top-nav-menu">
         <div className="top-nav-brand">
           <Link to="/" className="brand-link">
@@ -65,12 +75,16 @@ function TopNav() {
 
         <div className="top-nav-links">
           {quickLinks.map((link) => (
-            <Link key={link.slug} to={`/tool/${link.slug}`} className={`top-nav-link ${location.pathname === `/tool/${link.slug}` ? 'active' : ''}`}>
+            <Link
+              key={link.slug}
+              to={`/tool/${link.slug}`}
+              className={`top-nav-link ${location.pathname === `/tool/${link.slug}` ? "active" : ""}`}
+            >
               {link.icon}
               {link.label}
             </Link>
           ))}
-          
+
           <button
             type="button"
             className="top-nav-link"
@@ -122,12 +136,16 @@ function TopNav() {
         <div className="mega-dropdown">
           <div className="mega-grid">
             {pdfTools
-              .filter((group) => group.category.includes('Convert'))
+              .filter((group) => group.category.includes("Convert"))
               .map((group) => (
                 <div key={group.category} className="mega-column">
                   <h4>{group.category}</h4>
                   {group.items.map((item) => (
-                    <Link key={item} to={`/tool/${createSlug(item)}`} className="mega-item">
+                    <Link
+                      key={item}
+                      to={`/tool/${createSlug(item)}`}
+                      className="mega-item"
+                    >
                       {item}
                     </Link>
                   ))}
@@ -144,7 +162,11 @@ function TopNav() {
               <div key={group.category} className="mega-column">
                 <h4>{group.category}</h4>
                 {group.items.map((item) => (
-                  <Link key={item} to={`/tool/${createSlug(item)}`} className="mega-item">
+                  <Link
+                    key={item}
+                    to={`/tool/${createSlug(item)}`}
+                    className="mega-item"
+                  >
                     {item}
                   </Link>
                 ))}
@@ -161,7 +183,11 @@ function TopNav() {
               <div key={group.category} className="mega-column">
                 <h4>{group.category}</h4>
                 {group.items.map((item) => (
-                  <Link key={item} to={`/tool/${createSlug(item)}`} className="mega-item">
+                  <Link
+                    key={item}
+                    to={`/tool/${createSlug(item)}`}
+                    className="mega-item"
+                  >
                     {item}
                   </Link>
                 ))}

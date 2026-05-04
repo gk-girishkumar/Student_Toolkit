@@ -1,6 +1,6 @@
-import { SignUp } from '@clerk/clerk-react';
-import { Link } from 'react-router-dom';
-import './AuthPage.css';
+import { SignUp } from "@clerk/clerk-react";
+import { Link } from "react-router-dom";
+import "./AuthPage.css";
 
 function SignupPage() {
   return (

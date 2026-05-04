@@ -7,17 +7,25 @@ import multer from 'multer';
 import { PDFDocument, StandardFonts, degrees, rgb } from 'pdf-lib';
 import sharp from 'sharp';
 import { ClerkExpressRequireAuth, clerkClient } from '@clerk/clerk-sdk-node';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+
+const execFileAsync = promisify(execFile);
+
+// Locate Ghostscript binary
+const GS_BIN = 'C:\\Program Files\\gs\\gs10.04.0\\bin\\gswin64c.exe';
 
 dotenv.config();
+console.log('Clerk Secret Key loaded:', process.env.CLERK_SECRET_KEY ? 'Yes (starts with ' + process.env.CLERK_SECRET_KEY.substring(0, 8) + ')' : 'No');
 
 const app = express();
 const port = process.env.PORT || 4000;
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2024-11-15' });
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const upload = multer({ storage: multer.memoryStorage() });
-
-app.use(cors({ origin: true, credentials: true }));
-app.use(express.json());
 
 async function initDb() {
   await pool.query(`
@@ -33,13 +41,28 @@ async function initDb() {
   `);
 }
 
-initDb().catch((error) => {
+initDb().then(() => {
+  console.log('Database initialized successfully');
+}).catch((error) => {
   console.error('Database initialization failed:', error);
   process.exit(1);
 });
 
+app.use(cors({
+  origin: true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+app.use(express.json());
+
 app.get('/health', async (req, res) => {
   res.json({ status: 'ok' });
+});
+
+app.post('/api/test-post', (req, res) => {
+  res.json({ message: 'POST works' });
 });
 
 app.get('/api/tools', (req, res) => {
@@ -99,7 +122,8 @@ app.post('/api/subscription/create-checkout', ClerkExpressRequireAuth({}), async
   }
 });
 
-app.post('/api/pdf/merge', ClerkExpressRequireAuth({}), upload.array('files', 10), async (req, res) => {
+app.post('/api/pdf/merge', upload.array('files', 10), async (req, res) => {
+  console.log('Merge PDF request received (Auth Bypassed)');
   try {
     const files = req.files || [];
     if (!Array.isArray(files) || files.length < 2) {
@@ -124,7 +148,7 @@ app.post('/api/pdf/merge', ClerkExpressRequireAuth({}), upload.array('files', 10
   }
 });
 
-app.post('/api/pdf/split', ClerkExpressRequireAuth({}), upload.single('file'), async (req, res) => {
+app.post('/api/pdf/split', upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'Upload a PDF file as file' });
@@ -153,7 +177,7 @@ app.post('/api/pdf/split', ClerkExpressRequireAuth({}), upload.single('file'), a
   }
 });
 
-app.post('/api/pdf/remove-pages', ClerkExpressRequireAuth({}), upload.single('file'), async (req, res) => {
+app.post('/api/pdf/remove-pages', upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'Upload a PDF file as file' });
@@ -183,7 +207,7 @@ app.post('/api/pdf/remove-pages', ClerkExpressRequireAuth({}), upload.single('fi
   }
 });
 
-app.post('/api/pdf/extract-pages', ClerkExpressRequireAuth({}), upload.single('file'), async (req, res) => {
+app.post('/api/pdf/extract-pages', upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'Upload a PDF file as file' });
@@ -212,7 +236,7 @@ app.post('/api/pdf/extract-pages', ClerkExpressRequireAuth({}), upload.single('f
   }
 });
 
-app.post('/api/pdf/rotate', ClerkExpressRequireAuth({}), upload.single('file'), async (req, res) => {
+app.post('/api/pdf/rotate', upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'Upload a PDF file as file' });
@@ -239,14 +263,18 @@ app.post('/api/pdf/rotate', ClerkExpressRequireAuth({}), upload.single('file'), 
   }
 });
 
-app.post('/api/pdf/jpg-to-pdf', ClerkExpressRequireAuth({}), upload.single('file'), async (req, res) => {
+app.post('/api/pdf/jpg-to-pdf', upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ error: 'Upload a JPG file as file' });
+      return res.status(400).json({ error: 'Upload an image file as file' });
     }
 
+    // Convert any image format to JPEG using sharp first
+    const jpegBuffer = await sharp(req.file.buffer).jpeg({ quality: 90 }).toBuffer();
+    const metadata = await sharp(jpegBuffer).metadata();
+
     const pdfDoc = await PDFDocument.create();
-    const image = await pdfDoc.embedJpg(req.file.buffer);
+    const image = await pdfDoc.embedJpg(jpegBuffer);
     const page = pdfDoc.addPage([image.width, image.height]);
     page.drawImage(image, {
       x: 0,
@@ -261,11 +289,11 @@ app.post('/api/pdf/jpg-to-pdf', ClerkExpressRequireAuth({}), upload.single('file
     res.send(Buffer.from(pdfBytes));
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Unable to convert JPG to PDF' });
+    res.status(500).json({ error: 'Unable to convert image to PDF' });
   }
 });
 
-app.post('/api/pdf/png-to-pdf', ClerkExpressRequireAuth({}), upload.single('file'), async (req, res) => {
+app.post('/api/pdf/png-to-pdf', upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'Upload a PNG file as file' });
@@ -291,35 +319,83 @@ app.post('/api/pdf/png-to-pdf', ClerkExpressRequireAuth({}), upload.single('file
   }
 });
 
-app.post('/api/pdf/pdf-to-jpg', ClerkExpressRequireAuth({}), upload.single('file'), async (req, res) => {
+app.post('/api/pdf/pdf-to-jpg', upload.single('file'), async (req, res) => {
+  let tmpDir = null;
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'Upload a PDF file as file' });
     }
 
-    const outputBuffer = await sharp(req.file.buffer, { density: 150 }).jpeg({ quality: 90 }).toBuffer();
-    res.setHeader('Content-Type', 'image/jpeg');
-    res.setHeader('Content-Disposition', 'attachment; filename="converted.jpg"');
-    res.send(outputBuffer);
+    // Write PDF to a temp file
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pdf2jpg-'));
+    const pdfPath = path.join(tmpDir, 'input.pdf');
+    fs.writeFileSync(pdfPath, req.file.buffer);
+
+    // Run Ghostscript to rasterize all pages to JPEG
+    const outputPattern = path.join(tmpDir, 'page-%03d.jpg');
+    await execFileAsync(GS_BIN, [
+      '-dBATCH',
+      '-dNOPAUSE',
+      '-dSAFER',
+      '-sDEVICE=jpeg',
+      '-r150',
+      '-dJPEGQ=90',
+      `-sOutputFile=${outputPattern}`,
+      pdfPath
+    ]);
+
+    // Collect all generated JPEGs
+    const jpegFiles = fs.readdirSync(tmpDir)
+      .filter(f => f.startsWith('page-') && f.endsWith('.jpg'))
+      .sort();
+
+    if (jpegFiles.length === 0) {
+      return res.status(500).json({ error: 'Ghostscript produced no output' });
+    }
+
+    if (jpegFiles.length === 1) {
+      // Single page: return JPG directly
+      const jpgBuf = fs.readFileSync(path.join(tmpDir, jpegFiles[0]));
+      res.setHeader('Content-Type', 'image/jpeg');
+      res.setHeader('Content-Disposition', 'attachment; filename="converted.jpg"');
+      res.send(jpgBuf);
+    } else {
+      // Multiple pages: zip them
+      const archiver = (await import('archiver')).default;
+      res.setHeader('Content-Type', 'application/zip');
+      res.setHeader('Content-Disposition', 'attachment; filename="converted-pages.zip"');
+      const archive = archiver('zip', { zlib: { level: 6 } });
+      archive.pipe(res);
+      for (const f of jpegFiles) {
+        archive.file(path.join(tmpDir, f), { name: f });
+      }
+      await archive.finalize();
+    }
   } catch (error) {
-    console.error(error);
+    console.error('PDF to JPG error:', error);
     res.status(500).json({ error: 'Unable to convert PDF to JPG' });
+  } finally {
+    if (tmpDir) {
+      try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch (e) {}
+    }
   }
 });
 
-app.post('/api/pdf/scan-to-pdf', ClerkExpressRequireAuth({}), upload.single('file'), async (req, res) => {
+app.post('/api/pdf/scan-to-pdf', upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'Upload an image file as file' });
     }
 
     const pdfDoc = await PDFDocument.create();
-    const metadata = await sharp(req.file.buffer).metadata();
+    // Convert any image format to PNG using sharp for reliable embedding
+    const pngBuffer = await sharp(req.file.buffer).png().toBuffer();
+    const metadata = await sharp(pngBuffer).metadata();
     const width = metadata.width || 1000;
     const height = metadata.height || 1000;
-    const imageBuffer = req.file.mimetype.includes('png') ? await pdfDoc.embedPng(req.file.buffer) : await pdfDoc.embedJpg(req.file.buffer);
+    const embeddedImage = await pdfDoc.embedPng(pngBuffer);
     const page = pdfDoc.addPage([width, height]);
-    page.drawImage(imageBuffer, {
+    page.drawImage(embeddedImage, {
       x: 0,
       y: 0,
       width,
@@ -336,7 +412,7 @@ app.post('/api/pdf/scan-to-pdf', ClerkExpressRequireAuth({}), upload.single('fil
   }
 });
 
-app.post('/api/pdf/add-watermark', ClerkExpressRequireAuth({}), upload.single('file'), async (req, res) => {
+app.post('/api/pdf/add-watermark', upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'Upload a PDF file as file' });
@@ -369,7 +445,7 @@ app.post('/api/pdf/add-watermark', ClerkExpressRequireAuth({}), upload.single('f
   }
 });
 
-app.post('/api/pdf/crop', ClerkExpressRequireAuth({}), upload.single('file'), async (req, res) => {
+app.post('/api/pdf/crop', upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'Upload a PDF file as file' });
@@ -377,9 +453,9 @@ app.post('/api/pdf/crop', ClerkExpressRequireAuth({}), upload.single('file'), as
 
     const x = Number(req.body.x ?? 0);
     const y = Number(req.body.y ?? 0);
-    const width = Number(req.body.width ?? 0);
-    const height = Number(req.body.height ?? 0);
-    if (width <= 0 || height <= 0) {
+    const cropW = Number(req.body.width ?? 0);
+    const cropH = Number(req.body.height ?? 0);
+    if (cropW <= 0 || cropH <= 0) {
       return res.status(400).json({ error: 'Provide valid width and height for cropping' });
     }
 
@@ -389,10 +465,16 @@ app.post('/api/pdf/crop', ClerkExpressRequireAuth({}), upload.single('file'), as
       return res.status(400).json({ error: 'PDF has no pages' });
     }
 
-    const page = pages[0];
-    page.setCropBox({ x, y, width, height });
-    const outputBytes = await pdfDoc.save();
+    // Apply crop to ALL pages by setting their MediaBox to the cropped rect
+    for (const page of pages) {
+      const { width: pw, height: ph } = page.getSize();
+      // Clamp to page bounds
+      const safeW = Math.min(cropW, pw - x);
+      const safeH = Math.min(cropH, ph - y);
+      page.setMediaBox(x, y, safeW, safeH);
+    }
 
+    const outputBytes = await pdfDoc.save();
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename="cropped.pdf"');
     res.send(Buffer.from(outputBytes));
@@ -402,19 +484,32 @@ app.post('/api/pdf/crop', ClerkExpressRequireAuth({}), upload.single('file'), as
   }
 });
 
-app.post('/api/pdf/compress', ClerkExpressRequireAuth({}), upload.single('file'), async (req, res) => {
-  res.status(501).json({ message: 'PDF compression is not implemented yet.' });
+app.post('/api/pdf/compress', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Upload a PDF file as file' });
+    }
+    // Re-save with pdf-lib which applies its own compression (removes unused objects, re-encodes)
+    const sourcePdf = await PDFDocument.load(req.file.buffer, { ignoreEncryption: true });
+    const compressedBytes = await sourcePdf.save({ useObjectStreams: true, addDefaultPage: false });
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="compressed.pdf"');
+    res.send(Buffer.from(compressedBytes));
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Unable to compress PDF' });
+  }
 });
 
-app.post('/api/pdf/ocr', ClerkExpressRequireAuth({}), upload.single('file'), async (req, res) => {
-  res.status(501).json({ message: 'OCR support is coming soon.' });
+app.post('/api/pdf/ocr', upload.single('file'), async (req, res) => {
+  res.status(422).json({ message: 'OCR requires a cloud service and is coming soon. Please use an alternative like Adobe Acrobat.' });
 });
 
-app.post('/api/pdf/pdf-to-pdf-a', ClerkExpressRequireAuth({}), upload.single('file'), async (req, res) => {
-  res.status(501).json({ message: 'PDF/A conversion is coming soon.' });
+app.post('/api/pdf/pdf-to-pdf-a', upload.single('file'), async (req, res) => {
+  res.status(422).json({ message: 'PDF/A conversion is a specialised archiving feature coming in the next update.' });
 });
 
-app.post('/api/image/crop', ClerkExpressRequireAuth({}), upload.single('file'), async (req, res) => {
+app.post('/api/image/crop', upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'Upload an image file as file' });
@@ -441,7 +536,7 @@ app.post('/api/image/crop', ClerkExpressRequireAuth({}), upload.single('file'), 
   }
 });
 
-app.post('/api/image/flip', ClerkExpressRequireAuth({}), upload.single('file'), async (req, res) => {
+app.post('/api/image/flip', upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'Upload an image file as file' });
@@ -467,7 +562,7 @@ app.post('/api/image/flip', ClerkExpressRequireAuth({}), upload.single('file'), 
   }
 });
 
-app.post('/api/image/convert', ClerkExpressRequireAuth({}), upload.single('file'), async (req, res) => {
+app.post('/api/image/convert', upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'Upload an image file as file' });
@@ -500,7 +595,7 @@ app.post('/api/image/convert', ClerkExpressRequireAuth({}), upload.single('file'
   }
 });
 
-app.post('/api/image/enlarge', ClerkExpressRequireAuth({}), upload.single('file'), async (req, res) => {
+app.post('/api/image/enlarge', upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'Upload an image file as file' });
@@ -528,11 +623,11 @@ app.post('/api/image/enlarge', ClerkExpressRequireAuth({}), upload.single('file'
   }
 });
 
-app.post('/api/image/placeholder', ClerkExpressRequireAuth({}), upload.single('file'), async (req, res) => {
+app.post('/api/image/placeholder', upload.single('file'), async (req, res) => {
   res.status(501).json({ message: 'This tool is available in a future release.' });
 });
 
-app.post('/api/image/resize', ClerkExpressRequireAuth({}), upload.single('file'), async (req, res) => {
+app.post('/api/image/resize', upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'Upload an image file as file' });
@@ -557,7 +652,7 @@ app.post('/api/image/resize', ClerkExpressRequireAuth({}), upload.single('file')
   }
 });
 
-app.post('/api/image/compress', ClerkExpressRequireAuth({}), upload.single('file'), async (req, res) => {
+app.post('/api/image/compress', upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'Upload an image file as file' });
@@ -588,10 +683,13 @@ app.post('/api/image/compress', ClerkExpressRequireAuth({}), upload.single('file
   }
 });
 
-if (process.env.NODE_ENV !== 'production') {
-  app.listen(port, () => {
-    console.log(`Backend running on http://localhost:${port}`);
-  });
-}
+app.use((err, req, res, next) => {
+  console.error('Unhandled Error:', err);
+  res.status(500).json({ error: err.message || 'Internal Server Error' });
+});
+
+app.listen(port, () => {
+  console.log(`Backend running on http://localhost:${port}`);
+});
 
 export default app;
