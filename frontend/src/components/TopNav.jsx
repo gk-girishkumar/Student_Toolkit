@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { SignedIn, UserButton } from "@clerk/clerk-react";
+import { SignedIn, SignedOut, UserButton, SignInButton } from "@clerk/clerk-react";
 import {
   Combine,
   Scissors,
@@ -129,6 +129,11 @@ function TopNav() {
           <SignedIn>
             <UserButton afterSignOutUrl="/" />
           </SignedIn>
+          <SignedOut>
+            <SignInButton mode="modal">
+              <button className="top-nav-link" style={{ background: '#2563eb', color: 'white' }}>Sign In</button>
+            </SignInButton>
+          </SignedOut>
         </div>
       </nav>
 
